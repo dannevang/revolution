@@ -28,7 +28,7 @@ class modElementCategoryGetListProcessor extends modObjectGetListProcessor {
     public function beforeIteration(array $list) {
         if ($this->getProperty('showNone',false)) {
             $list = array('0' => array(
-                'id' => '',
+                'id' => 0,
                 'category' => $this->modx->lexicon('none'),
                 'name' => $this->modx->lexicon('none'),
             ));
@@ -65,7 +65,7 @@ class modElementCategoryGetListProcessor extends modObjectGetListProcessor {
                 if (!$child->checkPolicy('list')) continue;
 
                 $categoryArray = $child->toArray();
-                $categoryArray['name'] = $nestedName . ' - ' . $child->get('category');
+                $categoryArray['name'] = $nestedName . ' — ' . $child->get('category');
 
                 $list[] = $categoryArray;
 

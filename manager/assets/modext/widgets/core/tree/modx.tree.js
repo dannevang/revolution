@@ -40,6 +40,7 @@ MODx.tree.Tree = function(config) {
         root = {
             nodeType: 'async'
             ,text: config.root_name || config.rootName || ''
+            ,qtip: config.root_qtip || config.rootQtip || ''
             ,draggable: false
             ,id: config.root_id || config.rootId || 'root'
             ,pseudoroot: true
@@ -47,6 +48,7 @@ MODx.tree.Tree = function(config) {
                 pseudoroot: true
             }
             ,cls: 'tree-pseudoroot-node'
+            ,iconCls: config.root_iconCls || config.rootIconCls || ''
         };
     } else {
         tl = new Ext.tree.TreeLoader({
@@ -55,7 +57,6 @@ MODx.tree.Tree = function(config) {
                 uiProvider: MODx.tree.CheckboxNodeUI
             }
         });
-        console.log('else');
         root = new Ext.tree.TreeNode({
             text: this.config.rootName || ''
             ,draggable: false
@@ -95,8 +96,9 @@ MODx.tree.Tree = function(config) {
                 },
                 hide: function() {
                     var node = this.activeNode;
-                    if (node)
+                    if (node){
                         node.isSelected() || node.ui.removeClass('x-tree-selected');
+                    }
                 }
             }
         }
@@ -124,7 +126,6 @@ MODx.tree.Tree = function(config) {
     } else {
         var tb = this.getToolbar();
         if (config.tbar && config.useDefaultToolbar) {
-            tb.push('-');
             for (var i=0;i<config.tbar.length;i++) {
                 tb.push(config.tbar[i]);
             }
@@ -145,11 +146,14 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
     ,disableHref: false
 
     ,onLoad: function(ldr,node,resp) {
+        // no select() here, just addClass, using Active Input Cookie Value to set focus
         Ext.each(node.childNodes, function(node){
             if (node.attributes.selected) {
-                node.select();
+                //node.select();
+                node.ui.addClass('x-tree-selected');
             }
         });
+        
         var r = Ext.decode(resp.responseText);
         if (r.message) {
             var el = this.getTreeEl();
@@ -216,7 +220,7 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
         if (Ext.isEmpty(treeState) && this.root) {
             this.root.expand();
             if (this.root.firstChild && this.config.expandFirst) {
-                this.root.firstChild.select();
+                //this.root.firstChild.select();
                 this.root.firstChild.expand();
             }
         } else {
@@ -296,10 +300,13 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
         var treeState = Ext.state.Manager.get(this.treestate_id);
         this.root.reload();
         if (treeState === undefined) {
-            this.root.expand(null,null);
+            this.root.expand();
         } else {
-            for (var i=0;i<treeState.length;i++) {
-                this.expandPath(treeState[i]);
+            // Make sure we have a valid state array
+            if (Ext.isArray(treeState)) {
+                Ext.each(treeState, function(path, idx) {
+                    this.expandPath(path);
+                }, this);
             }
         }
         if (func) {
@@ -453,7 +460,7 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
             if (e.button == 1) return window.open(n.attributes.page,'_blank');
             else if (e.ctrlKey == 1 || e.metaKey == 1 || e.shiftKey == 1) return window.open(n.attributes.page);
             MODx.loadPage(n.attributes.page);
-        } else {
+        } else if (n.isExpandable()) {
             n.toggle();
         }
         return true;
@@ -580,7 +587,7 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
         var node = this.getNodeById(id);
         if (node) {
             var n = self ? node : node.parentNode;
-            var l = this.getLoader().load(n,function() {n.expand();},this);
+            this.getLoader().load(n,function() {n.expand();},this);
         }
     }
 
@@ -639,7 +646,7 @@ Ext.extend(MODx.tree.Tree,Ext.tree.TreePanel,{
             ,tooltip: {text: _('tree_collapse')}
             ,handler: this.collapseNodes
             ,scope: this
-        },'-',{
+        },{
             icon: iu+'refresh.png'
             ,cls: 'x-btn-icon refresh'
             ,tooltip: {text: _('tree_refresh')}

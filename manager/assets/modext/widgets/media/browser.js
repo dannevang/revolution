@@ -14,10 +14,6 @@ MODx.Media = function(config) {
     // DataView
     this.view = MODx.load({
         xtype: 'modx-browser-view'
-        ,onSelect: {
-            fn: this.onSelect
-            ,scope: this
-        }
         ,source: config.source || MODx.config.default_media_source
         ,allowedFileTypes: config.allowedFileTypes || ''
         ,wctx: config.wctx || 'web'
@@ -44,6 +40,7 @@ MODx.Media = function(config) {
         ,rootVisible: config.rootVisible == undefined || !Ext.isEmpty(config.rootId)
         ,id: this.ident+'-tree'
         ,hideSourceCombo: config.hideSourceCombo || false
+        ,useDefaultToolbar: false
         ,listeners: {
             afterUpload: {
                 fn: function() {
@@ -83,7 +80,7 @@ MODx.Media = function(config) {
     }, this);
 
     Ext.applyIf(config, {
-        cls: 'container'
+        cls: 'modx-browser container'
         ,layout: 'border'
         ,width: '98%'
         ,height: '95%'
@@ -92,7 +89,7 @@ MODx.Media = function(config) {
             ,width: 250
             ,items: this.tree
             ,id: this.ident+'-browser-tree'
-            ,cls: 'modx-pb-browser-tree'
+            ,cls: 'modx-browser-tree shadowbox'
             ,autoScroll: true
             ,split: true
         },{
@@ -100,7 +97,7 @@ MODx.Media = function(config) {
             ,layout: 'fit'
             ,items: this.view
             ,id: this.ident+'-browser-view'
-            ,cls: 'modx-pb-view-ct'
+            ,cls: 'modx-browser-view-ct'
             ,autoScroll: true
             ,border: false
             ,tbar: this.getToolbar()
@@ -108,7 +105,7 @@ MODx.Media = function(config) {
             region: 'east'
             ,width: 250
             ,id: this.ident+'-img-detail-panel'
-            ,cls: 'modx-pb-details-ct'
+            ,cls: 'modx-browser-details-ct'
             ,split: true
             //,collapsed: true
         }]
@@ -147,15 +144,24 @@ Ext.extend(MODx.Media, Ext.Container, {
             ,allowedFileTypes: this.config.allowedFileTypes || ''
             ,wctx: this.config.wctx || 'web'
         });
-        this.sortImages();
+        this.sortStore();
     }
 
     /**
      * Sort the DataView results
      */
-    ,sortImages : function() {
+    ,sortStore: function(){
         var v = Ext.getCmp(this.ident+'sortSelect').getValue();
         this.view.store.sort(v, v == 'name' ? 'asc' : 'desc');
+        this.view.select(0);
+    }
+
+    /**
+     * Switch viewmode
+     */
+    ,changeViewmode: function() {
+        var v = Ext.getCmp(this.ident+'viewSelect').getValue();
+        this.view.setTemplate(v);
         this.view.select(0);
     }
 
@@ -177,14 +183,14 @@ Ext.extend(MODx.Media, Ext.Container, {
      * @returns {Array}
      */
     ,getToolbar: function() {
-        return ['-', {
+        return [{
             text: _('filter')+':'
             ,xtype: 'label'
-        }, '-', {
+        },{
             xtype: 'textfield'
             ,id: this.ident+'filter'
             ,selectOnFocus: true
-            ,width: 100
+            ,width: 200
             ,listeners: {
                 render: {
                     fn: function(){
@@ -195,10 +201,10 @@ Ext.extend(MODx.Media, Ext.Container, {
                     ,scope: this
                 }
             }
-        }, '-', {
+        },{
             text: _('sort_by')+':'
             ,xtype: 'label'
-        }, '-', {
+        },{
             id: this.ident+'sortSelect'
             ,xtype: 'combo'
             ,typeAhead: true
@@ -220,33 +226,33 @@ Ext.extend(MODx.Media, Ext.Container, {
             })
             ,listeners: {
                 select: {
-                    fn: this.sortImages
+                    fn: this.sortStore
                     ,scope: this
                 }
             }
-        }];
-    }
-
-    ,onSelect: function(data) {
-        // @todo make sure this is never used
-        console.log('MODx.Media#onSelect', data);
-        var selNode = this.view.getSelectedNodes()[0];
-        var callback = this.config.onSelect || this.onSelectHandler;
-        var lookup = this.view.lookup;
-        var scope = this.config.scope;
-        this.hide(this.config.animEl || null,function(){
-            if (selNode && callback) {
-                var data = lookup[selNode.id];
-                Ext.callback(callback,scope || this,[data]);
-                this.fireEvent('select',data);
+        }, '-', {
+            text: _('files_viewmode')+':'
+            ,xtype: 'label'
+        }, '-', {
+            id: this.ident+'viewSelect'
+            ,xtype: 'combo'
+            ,typeAhead: false
+            ,triggerAction: 'all'
+            ,width: 100
+            ,editable: false
+            ,mode: 'local'
+            ,displayField: 'desc'
+            ,valueField: 'type'
+            ,lazyInit: false
+            ,value: MODx.config.modx_browser_default_viewmode || 'grid'
+            ,store: new Ext.data.SimpleStore({
+                fields: ['type', 'desc'],
+                data : [['grid', _('files_viewmode_grid')],['list', _('files_viewmode_list')]]
+            })
+            ,listeners: {
+                'select': {fn:this.changeViewmode, scope:this}
             }
-        },scope);
-    }
-
-    ,onSelectHandler: function(data) {
-        // @todo make sure this is never used
-        console.log('MODx.Media#onSelectHandler', data);
-        Ext.get(this.returnEl).dom.value = unescape(data.url);
+        }];
     }
 });
 Ext.reg('modx-media-view', MODx.Media);

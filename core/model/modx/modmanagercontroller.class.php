@@ -105,7 +105,9 @@ abstract class modManagerController {
     public function prepareLanguage() {
         $this->modx->lexicon->load('action');
         $languageTopics = $this->getLanguageTopics();
-        foreach ($languageTopics as $topic) { $this->modx->lexicon->load($topic); }
+        foreach ($languageTopics as $topic) {
+            $this->modx->lexicon->load($topic);
+        }
         $this->setPlaceholder('_lang_topics',implode(',',$languageTopics));
         $this->setPlaceholder('_lang',$this->modx->lexicon->fetch());
     }
@@ -137,11 +139,9 @@ abstract class modManagerController {
         $this->checkFormCustomizationRules();
 
         $this->setPlaceholder('_config',$this->modx->config);
+        $this->setCssURLPlaceholders();
         /* help url */
         $helpUrl = $this->getHelpUrl();
-        if (substr($helpUrl,0,4) != 'http') {
-            $helpUrl = $this->modx->getOption('base_help_url',null,'http://rtfm.modx.com/display/revolution20/').$helpUrl;
-        }
         $this->addHtml('<script type="text/javascript">MODx.helpUrl = "'.($helpUrl).'"</script>');
 
         $this->modx->invokeEvent('OnManagerPageBeforeRender',array('controller' => &$this));
@@ -499,10 +499,15 @@ abstract class modManagerController {
         if ($this->loadBaseJavascript) {
             $externals[] = $managerUrl.'assets/modext/core/modx.localization.js';
             $externals[] = $managerUrl.'assets/modext/util/utilities.js';
+            $externals[] = $managerUrl.'assets/modext/util/datetime.js';
             $externals[] = $managerUrl.'assets/modext/util/uploaddialog.js';
-            $externals[] = $managerUrl.'assets/modext/widgets/core/modx.button.js';
+            $externals[] = $managerUrl.'assets/modext/util/fileupload.js';
+            $externals[] = $managerUrl.'assets/modext/util/superboxselect.js';
 
             $externals[] = $managerUrl.'assets/modext/core/modx.component.js';
+            $externals[] = $managerUrl.'assets/modext/core/modx.view.js';
+            $externals[] = $managerUrl.'assets/modext/widgets/core/modx.button.js';
+            $externals[] = $managerUrl.'assets/modext/widgets/core/modx.searchbar.js';
             $externals[] = $managerUrl.'assets/modext/widgets/core/modx.panel.js';
             $externals[] = $managerUrl.'assets/modext/widgets/core/modx.tabs.js';
             $externals[] = $managerUrl.'assets/modext/widgets/core/modx.window.js';
@@ -524,7 +529,7 @@ abstract class modManagerController {
             $externals[] = $managerUrl.'assets/modext/widgets/element/modx.tree.element.js';
             $externals[] = $managerUrl.'assets/modext/widgets/system/modx.tree.directory.js';
             $externals[] = $managerUrl.'assets/modext/widgets/system/modx.panel.filetree.js';
-            $externals[] = $managerUrl.'assets/modext/core/modx.view.js';
+            $externals[] = $managerUrl.'assets/modext/widgets/media/modx.browser.js';
 
             $siteId = $this->modx->user->getUserToken('mgr');
 
@@ -789,7 +794,7 @@ abstract class modManagerController {
      *
      * @param xPDOObject $obj If passed, will validate against for rules with constraints.
      * @param bool $forParent
-     * @return bool
+     * @return array
      */
     public function checkFormCustomizationRules(&$obj = null,$forParent = false) {
         $overridden = array();
@@ -846,7 +851,9 @@ abstract class modManagerController {
                 if (empty($obj) || !($obj instanceof $constraintClass)) continue;
                 $constraintField = $rule->get('constraint_field');
                 $constraint = $rule->get('constraint');
-                if ($obj->get($constraintField) != $constraint) {
+                $constraintList = explode(',', $constraint);
+                $constraintList = array_map('trim', $constraintList);
+                if (($obj->get($constraintField) != $constraint) && (!in_array($obj->get($constraintField), $constraintList))) {
                     continue;
                 }
             }
@@ -899,6 +906,35 @@ abstract class modManagerController {
         $langTopics = implode(',',$langTopics);
         $this->setPlaceholder('_lang_topics',$langTopics);
         return $langTopics;
+    }
+
+    public function setCssURLPlaceholders()
+    {
+        $managerUrl = $this->modx->getOption('manager_url', null, MODX_MANAGER_URL);
+        $managerPath = $this->modx->getOption('manager_path',null,MODX_MANAGER_PATH);
+        
+        $index = false;
+        $login = false;
+        
+        if ($this->theme != 'default') {
+            if (file_exists($managerPath . 'templates/' . $this->theme . '/css/index.css')) {
+                $this->setPlaceholder('indexCss', $managerUrl . 'templates/' . $this->theme . '/css/index.css');
+                $index = true;
+            }
+
+            if (file_exists($managerPath . 'templates/' . $this->theme . '/css/login.css')) {
+                $this->setPlaceholder('loginCss', $managerUrl . 'templates/' . $this->theme . '/css/login.css');
+                $login = true;
+            }
+        }
+
+        if (!$index) {
+            $this->setPlaceholder('indexCss', $managerUrl . 'templates/default/css/index.css');
+        }
+        
+        if (!$login) {
+            $this->setPlaceholder('loginCss', $managerUrl . 'templates/default/css/login.css');
+        }
     }
 }
 

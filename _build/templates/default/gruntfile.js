@@ -23,6 +23,11 @@ module.exports = function(grunt) {
 					{src:'bourbon/**/*',cwd:'<%= dirs.lib %>',dest:'<%= dirs.scss %>',expand:true}
 				]
 			},
+			neat: {
+				files:[
+					{src:'neat/**/*',cwd:'<%= dirs.lib %>',dest:'<%= dirs.scss %>',expand:true}
+				]
+			},
 			fontawesome: {
 				files:[
 					{src: '<%= dirs.lib %>font-awesome/scss/**/*.scss',dest:'<%= dirs.scss %>font-awesome/',expand:true,flatten:true},
@@ -80,22 +85,11 @@ module.exports = function(grunt) {
 					'<%= dirs.css %>index.css': 'sass/index.scss',
 					'<%= dirs.css %>login.css': 'sass/login.scss'
 				}
-			},
-            map: {
-                options: {
-                    style: 'expanded',
-                    compass: false,
-                    sourcemap: true
-                },
-				files: {
-					'<%= dirs.css %>index.css': 'sass/index.scss',
-					'<%= dirs.css %>login.css': 'sass/login.scss'
-				}
-            }
+			}
 		},
 		autoprefixer: { /* this expands the css so it needs to get compressed with cssmin afterwards */
 			options: {
-				// Task-specific options go here.
+				browsers: ['last 2 versions', 'ie 8', 'ie 9']
 			},
 
 			// just prefix the specified file
@@ -119,17 +113,17 @@ module.exports = function(grunt) {
 		  }
 		},
 		watch: { /* trigger tasks on save */
-			options: {
-				livereload: true
-			},
 			scss: {
-				files: ['<%= dirs.scss %>*','<%= dirs.scss %>components/**/*'],
-				tasks: ['sass:dist', 'autoprefixer', 'cssmin:compress', 'growl:sass']
+				files: ['<%= dirs.scss %>/**/*'],
+				tasks: ['sass:dev', 'growl:sass']
 			},
-			map: {
-				files: ['<%= dirs.scss %>*','<%= dirs.scss %>components/**/*'],
-				tasks: ['sass:map', 'growl:map']
-			}
+            css: {
+                options: {
+                    livereload: true
+                },
+                files: ['<%= dirs.css %>*.css'],
+                tasks: []
+            }
 		},
 		clean: { /* take out the trash */
 			prebuild: ['<%= dirs.scss %>bourbon','<%= dirs.scss %>font-awesome'],
@@ -206,7 +200,7 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks('grunt-bower-task');
 	grunt.loadNpmTasks('grunt-contrib-copy');
-	grunt.loadNpmTasks('grunt-contrib-sass');
+	grunt.loadNpmTasks('grunt-sass');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-growl');
@@ -216,6 +210,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-imageoptim');
 
     // Tasks
-    grunt.registerTask('default', ['growl:watch', 'watch:map']);
+    grunt.registerTask('default', ['growl:watch', 'watch']);
     grunt.registerTask('build', ['clean:prebuild','bower', 'copy', 'sass:dev','autoprefixer', 'growl:prefixes', 'growl:sass','cssmin:compress','clean:postbuild']);
 };

@@ -1,8 +1,8 @@
 <?php
 /**
- * Permissions Swedish lexicon topic
+ * Permissions English lexicon topic
  *
- * @language sv
+ * @language en
  * @package modx
  * @subpackage lexicon
  */
@@ -14,7 +14,7 @@ $_lang['perm.change_password_desc'] = 'Användaren kan ändra sitt lösenord.';
 $_lang['perm.change_profile_desc'] = 'Användaren kan ändra sin profil.';
 $_lang['perm.charsets_desc'] = 'Se en lista med teckenuppsättningar.';
 $_lang['perm.class_map_desc'] = 'Se en lista med klasser i klasskartan.';
-$_lang['perm.components_desc'] = 'Se komponentmenyn.';
+$_lang['perm.components_desc'] = 'Se Extras-menyn.';
 $_lang['perm.content_types_desc'] = 'Se innehållstypssidan.';
 $_lang['perm.copy_desc'] = 'Möjligheten att kopiera ett objekt.';
 $_lang['perm.countries_desc'] = 'Se en lista med länder.';
@@ -147,6 +147,7 @@ $_lang['perm.save_tv_desc'] = 'Spara alla mallvariabler.';
 $_lang['perm.save_user_desc'] = 'Spara alla användare.';
 $_lang['perm.search_desc'] = 'Använda söksidan.';
 $_lang['perm.settings_desc'] = 'Se och redigera alla systeminställningar.';
+$_lang['perm.events_desc'] = 'Se alla systemhändelser.';
 $_lang['perm.source_delete_desc'] = 'Ta bort en mediakälla.';
 $_lang['perm.source_edit_desc'] = 'Redigera en mediakälla.';
 $_lang['perm.source_save_desc'] = 'Skapa eller spara en mediakälla.';

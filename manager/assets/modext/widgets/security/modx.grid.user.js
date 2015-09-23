@@ -42,6 +42,7 @@ MODx.grid.User = function(config) {
         ,paging: true
         ,autosave: true
         ,save_action: 'security/user/updatefromgrid'
+        ,autosaveErrorMsg: _('user_err_save')
         ,remoteSort: true
         ,viewConfig: {
             forceFit:true
@@ -98,7 +99,7 @@ MODx.grid.User = function(config) {
             ,handler: this.createUser
             ,scope: this
             ,cls:'primary-button'
-        },'-',{
+        },{
             text: _('bulk_actions')
             ,menu: [{
                 text: _('selected_activate')
@@ -108,7 +109,7 @@ MODx.grid.User = function(config) {
                 text: _('selected_deactivate')
                 ,handler: this.deactivateSelected
                 ,scope: this
-            },'-',{
+            },{
                 text: _('selected_remove')
                 ,handler: this.removeSelected
                 ,scope: this
@@ -128,10 +129,11 @@ MODx.grid.User = function(config) {
             ,listeners: {
                 'select': {fn:this.filterUsergroup,scope:this}
             }
-        },'-',{
+        },{
             xtype: 'textfield'
             ,name: 'search'
             ,id: 'modx-user-search'
+            ,cls: 'x-form-filter'
             ,emptyText: _('search_ellipsis')
             ,listeners: {
                 'change': {fn: this.search, scope: this}
@@ -146,6 +148,7 @@ MODx.grid.User = function(config) {
         },{
             xtype: 'button'
             ,id: 'modx-filter-clear'
+            ,cls: 'x-form-filter-clear'
             ,text: _('filter_clear')
             ,listeners: {
                 'click': {fn: this.clearFilter, scope: this}
@@ -314,7 +317,7 @@ Ext.extend(MODx.grid.User,MODx.grid.Grid,{
     ,filterUsergroup: function(cb,nv,ov) {
         this.getStore().baseParams.usergroup = Ext.isEmpty(nv) || Ext.isObject(nv) ? cb.getValue() : nv;
         this.getBottomToolbar().changePage(1);
-        this.refresh();
+        //this.refresh();
         return true;
     }
     ,search: function(tf,newValue,oldValue) {
@@ -330,7 +333,7 @@ Ext.extend(MODx.grid.User,MODx.grid.Grid,{
         Ext.getCmp('modx-user-search').reset();
         Ext.getCmp('modx-user-filter-usergroup').reset();
         this.getBottomToolbar().changePage(1);
-        this.refresh();
+        //this.refresh();
     }
 });
 Ext.reg('modx-grid-user',MODx.grid.User);

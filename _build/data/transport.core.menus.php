@@ -212,6 +212,20 @@ $children[1]->fromArray(array (
   'handler' => 'MODx.clearCache(); return false;',
 ), '', true, true);
 
+/* Refresh URIs */
+$childrenOfClearCache[0]= $xpdo->newObject('modMenu');
+$childrenOfClearCache[0]->fromArray(array (
+  'menuindex' => 0,
+  'text' => 'refreshuris',
+  'description' => 'refreshuris_desc',
+  'parent' => '',
+  'permissions' => 'empty_cache',
+  'action' => '',
+  'handler' => 'MODx.refreshURIs(); return false;',
+), '', true, true);
+
+$children[1]->addMany($childrenOfClearCache, 'Children');
+
 /* Remove Locks */
 $children[2]= $xpdo->newObject('modMenu');
 $children[2]->fromArray(array (
@@ -354,7 +368,7 @@ $userNavMenus[0]->fromArray(array(
   'description' => '',
   'parent' => 'usernav',
   'permissions' => 'menu_user',
-  'action' => 'security/profile',
+  'action' => '',
   'icon' => '<span id="user-avatar">{$userImage}</span> <span id="user-username">{$username}</span>',
 ), '', true, true);
 $children = array();
@@ -390,6 +404,7 @@ $children[2]->fromArray(array (
   'parent' => 'user',
   'permissions' => 'logout',
   'action' => 'security/logout',
+  'handler' => 'MODx.logout(); return false;',
 ), '', true, true);
 
 $userNavMenus[0]->addMany($children,'Children');
@@ -403,7 +418,7 @@ $userNavMenus[1]->fromArray(array(
   'description' => '',
   'parent' => 'usernav',
   'permissions' => 'settings',
-  'action' => 'system/settings',
+  'action' => '',
   'icon' => '<i class="icon-gear icon icon-large"></i>',
 ), '', true, true);
 $children = array();
@@ -448,7 +463,7 @@ $children[3]->fromArray(array (
   'text' => 'contexts',
   'description' => 'contexts_desc',
   'parent' => 'admin',
-  'permissions' => 'view_contexts',
+  'permissions' => 'view_context',
   'action' => 'context',
 ), '', true, true);
 
@@ -517,7 +532,7 @@ $userNavMenus[2]->fromArray(array(
   'text' => 'about',
   'description' => '',
   'parent' => 'usernav',
-  'permissions' => '',
+  'permissions' => 'help',
   'action' => 'help',
   'icon' => '<i class="icon-question-circle icon icon-large"></i>',
 ), '', true, true);

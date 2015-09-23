@@ -2,7 +2,7 @@
 /*
  * MODX Revolution
  *
- * Copyright 2006-2014 by MODX, LLC.
+ * Copyright 2006-2015 by MODX, LLC.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -228,7 +228,7 @@ class modX extends xPDO {
      */
     public $sanitizePatterns = array(
         'scripts'       => '@<script[^>]*?>.*?</script>@si',
-        'entities'      => '@&#(\d+);@e',
+        'entities'      => '@&#(\d+);@',
         'tags1'          => '@\[\[(.*?)\]\]@si',
         'tags2'          => '@(\[\[|\]\])@si',
     );
@@ -524,7 +524,7 @@ class modX extends xPDO {
     public function initialize($contextKey= 'web', $options = null) {
         if (!$this->_initialized) {
             if (!$this->startTime) {
-                $this->startTime= $this->getMicroTime();
+                $this->startTime= microtime(true);
             }
 
             $this->getCacheManager();
@@ -564,10 +564,10 @@ class modX extends xPDO {
         $cache = $this->call('modExtensionPackage','loadCache',array(&$this));
         if (!empty($cache)) {
             foreach ($cache as $package) {
-                $package['tablePrefix'] = !empty($package['tablePrefix']) ? $package['tablePrefix'] : null;
-                $this->addPackage($package['namespace'],$package['path'],$package['tablePrefix']);
-                if (!empty($package['serviceName']) && !empty($package['serviceClass'])) {
-                    $this->getService($package['serviceName'],$package['serviceClass'],$package['path']);
+                $package['table_prefix'] = !empty($package['table_prefix']) ? $package['table_prefix'] : null;
+                $this->addPackage($package['namespace'],$package['path'],$package['table_prefix']);
+                if (!empty($package['service_name']) && !empty($package['service_class'])) {
+                    $this->getService($package['service_name'],$package['service_class'],$package['path']);
                 }
             }
         }
@@ -935,6 +935,17 @@ class modX extends xPDO {
     }
 
     /**
+     * Returns the full table name (with dynamic prefix) based on database settings.
+     * Legacy - Useful when dealing with migrations or prefixed database tables without an xPDO model (which xPDO.getTableName requires.)
+     *
+     * @param string $table Name of MODX table, less table prefix.
+     * @return string Full table name containing database and table prefix.
+     */
+    public function getFullTableName( $table = '' ) {
+        return $this->getOption('dbname') .".". $this->getOption( xPDO::OPT_TABLE_PREFIX ) . $table;
+    }
+
+    /**
      * Generates a URL representing a specified resource.
      *
      * @param integer $id The id of a resource.
@@ -1256,7 +1267,7 @@ class modX extends xPDO {
             $this->user = $this->newObject('modUser');
             $this->user->fromArray(array(
                 'id' => 0,
-                'username' => '(anonymous)'
+                'username' => $this->getOption('default_username','','(anonymous)',true)
             ), '', true);
         }
         ksort($this->config);
@@ -1371,6 +1382,8 @@ class modX extends xPDO {
                 $this->config['https_port']= isset($GLOBALS['https_port']) ? $GLOBALS['https_port'] : 443;
             if (!isset ($this->config['error_handler_class']))
                 $this->config['error_handler_class']= 'error.modErrorHandler';
+            if (!isset ($this->config['server_port']))
+                $this->config['server_port']= isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : '';
 
             $this->_config= $this->config;
             if (!$this->_loadConfig()) {
@@ -1559,7 +1572,7 @@ class modX extends xPDO {
      * @access public
      * @param string $eventName Name of an event to invoke.
      * @param array $params Optional params provided to the elements registered with an event.
-     * @return boolean
+     * @return bool|array
      */
     public function invokeEvent($eventName, array $params= array ()) {
         if (!$eventName)
@@ -1589,6 +1602,7 @@ class modX extends xPDO {
                     $plugin= $this->getObject('modPlugin', array ('id' => intval($pluginId), 'disabled' => '0'), true);
                 }
                 if ($plugin && !$plugin->get('disabled')) {
+                    $this->event->plugin =& $plugin;
                     $this->event->activated= true;
                     $this->event->activePlugin= $plugin->get('name');
                     $this->event->propertySet= (($pspos = strpos($pluginPropset, ':')) >= 1) ? substr($pluginPropset, $pspos + 1) : '';
@@ -1603,6 +1617,7 @@ class modX extends xPDO {
                     } elseif ($msg === false) {
                         $this->log(modX::LOG_LEVEL_ERROR, '[' . $this->event->name . '] Plugin failed!');
                     }
+                    $this->event->plugin = null;
                     $this->event->activePlugin= '';
                     $this->event->propertySet= '';
                     if (!$this->event->isPropagatable()) {
@@ -1658,7 +1673,7 @@ class modX extends xPDO {
         $response = '';
         if (file_exists($processorFile)) {
             if (!isset($this->lexicon)) $this->getService('lexicon', 'modLexicon');
-            if (!isset($this->error)) $this->getService('error', 'modError');
+            if (!isset($this->error)) $this->getService('error', 'error.modError');
 
             if ($isClass) {
                 /* ensure processor file is only included once if run multiple times in a request */
@@ -1872,13 +1887,16 @@ class modX extends xPDO {
      * @param string $action The action to pull from the lexicon module.
      * @param string $class_key The class key that the action is being performed on.
      * @param mixed $item The primary key id or array of keys to grab the object with.
+     * @param int|null $userId
      * @return modManagerLog The newly created modManagerLog object.
      */
-    public function logManagerAction($action, $class_key, $item) {
-        $userId = 0;
-        if ($this->user instanceof modUser) {
-            $userId = $this->user->get('id');
+    public function logManagerAction($action, $class_key, $item, $userId = null) {
+        if($userId === null) {
+	        if ($this->user instanceof modUser) {
+                $userId = $this->user->get('id');
+        	}
         }
+        
         $ml = $this->newObject('modManagerLog');
         $ml->set('user', (integer) $userId);
         $ml->set('occurred', strftime('%Y-%m-%d %H:%M:%S'));
@@ -1977,7 +1995,7 @@ class modX extends xPDO {
      */
     public function getContext($contextKey) {
         if (!isset($this->contexts[$contextKey])) {
-            $this->contexts[$contextKey]= $this->getObject('modContext', $contextKey);
+            $this->contexts[$contextKey]= $this->getObject('modContext', array('key' => $contextKey));
             if ($this->contexts[$contextKey]) {
                 $this->contexts[$contextKey]->prepare();
             }
@@ -2196,6 +2214,9 @@ class modX extends xPDO {
         $setting = $this->getObject('modSystemSetting',array(
             'key' => 'extension_packages',
         ));
+        if (!$setting) {
+            return false;
+        }
         $value = $setting->get('value');
         $value = is_array($value) ? $value : $this->fromJSON($value);
         $found = false;
@@ -2332,6 +2353,7 @@ class modX extends xPDO {
         if (!empty($_SESSION['cultureKey'])) $cultureKey = $_SESSION['cultureKey'];
         if (!empty($_REQUEST['cultureKey'])) $cultureKey = $_REQUEST['cultureKey'];
         $this->cultureKey = $cultureKey;
+        $this->setOption('cultureKey', $cultureKey);
 
         if ($this->getOption('setlocale', $options, true)) {
             $locale = setlocale(LC_ALL, null);
@@ -2547,6 +2569,7 @@ class modX extends xPDO {
     public function _postProcess() {
         if ($this->resourceGenerated && $this->getOption('cache_resource', null, true)) {
             if (is_object($this->resource) && $this->resource instanceof modResource && $this->resource->get('id') && $this->resource->get('cacheable')) {
+                $this->resource->_contextKey = $this->context->get('key');
                 $this->invokeEvent('OnBeforeSaveWebPageCache');
                 $this->cacheManager->generateResource($this->resource);
             }
@@ -2561,11 +2584,11 @@ class modX extends xPDO {
  */
 class modSystemEvent {
     /**
-     * @var const For new creations of objects in model events
+     * @var string For new creations of objects in model events
      */
     const MODE_NEW = 'new';
     /**
-     * @var const For updating objects in model events
+     * @var string For updating objects in model events
      */
     const MODE_UPD = 'upd';
     /**
@@ -2579,6 +2602,12 @@ class modSystemEvent {
      * @deprecated
      */
     public $activePlugin = '';
+    /**
+     * A reference/instance of the currently processed modPlugin object
+     *
+     * @var modPlugin|null
+     */
+    public $plugin = null;
     /**
      * @var string The name of the active property set for the invoked Event
      * @deprecated

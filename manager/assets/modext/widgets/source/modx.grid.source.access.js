@@ -20,6 +20,7 @@ MODx.grid.MediaSourceAccess = function(config) {
         ]
         ,tbar: [{
             text: _('source_access_add')
+            ,cls: 'primary-button'
             ,scope: this
             ,handler: this.createAcl
         }]
@@ -130,8 +131,8 @@ MODx.window.CreateSourceAccess = function(config) {
 
     Ext.applyIf(config,{
         title: _('source_access_add')
-        ,height: 250
-        ,width: 350
+        // ,height: 250
+        // ,width: 350
         ,type: 'modAccessMediaSource'
         ,acl: 0
         ,fields: [{

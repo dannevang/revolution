@@ -83,11 +83,11 @@ MODx.grid.AccessPolicy = function(config) {
             ,cls:'primary-button'
             ,scope: this
             ,handler: this.createPolicy
-        },'-',{
+        },{
             text: _('import')
             ,scope: this
             ,handler: this.importPolicy
-        },'-',{
+        },{
             text: _('bulk_actions')
             ,menu: [{
                 text: _('policy_remove_multiple')
@@ -98,6 +98,7 @@ MODx.grid.AccessPolicy = function(config) {
             xtype: 'textfield'
             ,name: 'search'
             ,id: 'modx-policy-search'
+            ,cls: 'x-form-filter'
             ,emptyText: _('search_ellipsis')
             ,listeners: {
                 'change': {fn: this.search, scope: this}
@@ -115,6 +116,7 @@ MODx.grid.AccessPolicy = function(config) {
         },{
             xtype: 'button'
             ,id: 'modx-sacpol-filter-clear'
+            ,cls: 'x-form-filter-clear'
             ,text: _('filter_clear')
             ,listeners: {
                 'click': {fn: this.clearFilter, scope: this}
@@ -128,7 +130,7 @@ Ext.extend(MODx.grid.AccessPolicy,MODx.grid.Grid,{
         var nv = newValue || tf;
         this.getStore().baseParams.query = Ext.isEmpty(nv) || Ext.isObject(nv) ? '' : nv;
         this.getBottomToolbar().changePage(1);
-        this.refresh();
+        //this.refresh();
         return true;
     }
     ,clearFilter: function() {
@@ -137,7 +139,7 @@ Ext.extend(MODx.grid.AccessPolicy,MODx.grid.Grid,{
     	};
         Ext.getCmp('modx-policy-search').reset();
     	this.getBottomToolbar().changePage(1);
-        this.refresh();
+        //this.refresh();
     }
 
     ,editPolicy: function(itm,e) {
@@ -271,8 +273,8 @@ MODx.window.CreateAccessPolicy = function(config) {
     config = config || {};
     this.ident = config.ident || 'cacp'+Ext.id();
     Ext.applyIf(config,{
-        width: 500
-        ,title: _('policy_create')
+        // width: 500
+        title: _('policy_create')
         ,url: MODx.config.connector_url
         ,action: 'security/access/policy/create'
         ,fields: [{
@@ -340,7 +342,7 @@ MODx.combo.AccessPolicyTemplate = function(config) {
         ,typeAhead: false
         ,editable: false
         ,allowBlank: false
-        ,listWidth: 300
+        // ,listWidth: 300
         ,pageSize: 20
         ,url: MODx.config.connector_url
         ,baseParams: {
@@ -371,12 +373,13 @@ MODx.window.ImportPolicy = function(config) {
             ,cls: 'panel-desc'
             ,style: 'margin-bottom: 10px;'
         },{
-            xtype: 'textfield'
+            xtype: 'fileuploadfield'
             ,fieldLabel: _('file')
+            ,buttonText: _('upload.buttons.upload')
             ,name: 'file'
             ,id: this.ident+'-file'
             ,anchor: '100%'
-            ,inputType: 'file'
+            // ,inputType: 'file'
         }]
     });
     MODx.window.ImportPolicy.superclass.constructor.call(this,config);

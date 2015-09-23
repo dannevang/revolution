@@ -28,10 +28,11 @@ MODx.panel.Dashboard = function(config) {
             ,getState:function() {
                 return {activeTab:this.items.indexOf(this.getActiveTab())};
             }
+            // todo: the layout is inconsistent with other panels, refactor the structure
             ,items: [{
                 title: _('general_information')
-                ,cls: 'main-wrapper form-with-labels'
-                ,defaults: { border: false }
+                ,cls: 'form-with-labels'
+                ,defaults: { border: false, cls: 'main-wrapper' }
                 ,layout: 'form'
                 ,id: 'modx-dashboard-form'
                 ,labelAlign: 'top'
@@ -104,11 +105,10 @@ MODx.panel.Dashboard = function(config) {
 
                     }]
                 },{
-                    html: '<hr />'
-                    ,border: false
-                },{
                     html: '<p>'+_('dashboard_widgets.intro_msg')+'</p>'
+                    ,bodyCssClass: 'panel-desc'
                     ,border: false
+                    ,cls: ''
                 },{
                     xtype: 'modx-grid-dashboard-widget-placements'
                     ,preventRender: true
@@ -217,6 +217,7 @@ MODx.grid.DashboardWidgetPlacements = function(config) {
         }]
         ,tbar: [{
             text: _('widget_place')
+            ,cls:'primary-button'
             ,handler: this.placeWidget
             ,scope: this
         }]
@@ -235,9 +236,8 @@ Ext.extend(MODx.grid.DashboardWidgetPlacements,MODx.grid.LocalGrid,{
 
     ,onAfterRowMove: function(dt,sri,ri,sels) {
         var s = this.getStore();
-        var sourceRec = s.getAt(sri);
-        var belowRec = s.getAt(ri);
-        var total = s.getTotalCount();
+        var sourceRec = s.data.items[sri];
+        var total = s.data.length;
 
         sourceRec.set('rank',sri);
         sourceRec.commit();
@@ -245,7 +245,7 @@ Ext.extend(MODx.grid.DashboardWidgetPlacements,MODx.grid.LocalGrid,{
         /* get all rows below ri, and up their rank by 1 */
         var brec;
         for (var x=(ri-1);x<total;x++) {
-            brec = s.getAt(x);
+            brec = s.data.items[x];
             if (brec) {
                 brec.set('rank',x);
                 brec.commit();
@@ -298,7 +298,7 @@ MODx.window.DashboardWidgetPlace = function(config) {
     this.ident = config.ident || 'dbugadd'+Ext.id();
     Ext.applyIf(config,{
         title: _('widget_place')
-        ,frame: true
+        // ,frame: true
         ,id: 'modx-window-dashboard-widget-place'
         ,fields: [{
             xtype: 'modx-combo-dashboard-widgets'
@@ -323,7 +323,11 @@ Ext.extend(MODx.window.DashboardWidgetPlace,MODx.Window,{
             fld.markInvalid(_('dashboard_widget_err_placed'));
             return false;
         }
-        var rank = s.getTotalCount();
+        var rank =  s.data.length > 0
+            // Get the rank of the last record
+            ? s.data.items[s.data.length - 1].get('rank') + 1
+            // Or set it to '0' if no record found
+            : 0;
 
         var fldStore = fld.getStore();
         var fldRi = fldStore.find('id',fld.getValue());
@@ -460,7 +464,7 @@ MODx.combo.DashboardWidgets = function(config) {
         ,displayField: 'name_trans'
         ,valueField: 'id'
         ,fields: ['id','name','name_trans','description','description_trans']
-        ,listWidth: 400
+        // ,listWidth: 400
         ,pageSize: 20
         ,url: MODx.config.connector_url
         ,baseParams: {

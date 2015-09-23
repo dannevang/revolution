@@ -97,9 +97,10 @@ MODx.panel.Plugin = function(config) {
                         ,fieldLabel: _('static_file')
                         ,description: MODx.expandHelp ? '' : _('static_file_msg')
                         ,name: 'static_file'
-                        ,hideFiles: true
+                        // ,hideFiles: true
                         ,openTo: config.record.openTo || ''
                         ,id: 'modx-plugin-static-file'
+                        ,triggerClass: 'x-form-code-trigger'
                         ,anchor: '100%'
                         ,maxLength: 255
                         ,value: config.record.static_file || ''

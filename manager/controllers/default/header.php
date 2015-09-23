@@ -65,8 +65,14 @@ class TopMenu
         $this->setPlaceholders();
 
         // Then process menu "containers"
-        $this->buildMenu('topnav', 'navb');
-        $this->buildMenu('usernav', 'userNav');
+        $this->buildMenu(
+            $this->modx->getOption('main_nav_parent', null, 'topnav', true),
+            'navb'
+        );
+        $this->buildMenu(
+            $this->modx->getOption('user_nav_parent', null, 'usernav', true),
+            'userNav'
+        );
 
     }
 
@@ -77,8 +83,17 @@ class TopMenu
      */
     public function setPlaceholders()
     {
+        $username = '';
+        if ($this->modx->getOption('manager_use_fullname') == true) {
+            $userProfile = $this->modx->user->getOne('Profile');
+            $username = $userProfile->get('fullname');
+        }
+
+        if (empty($username)) {
+            $username = $this->modx->getLoginUserName();
+        }
         $placeholders = array(
-            'username' => $this->modx->getLoginUserName(),
+            'username' => $username,
             'userImage' => $this->getUserImage(),
         );
 
@@ -92,36 +107,15 @@ class TopMenu
      */
     public function getUserImage()
     {
-        /** @var modUserProfile $userProfile */
-        $userProfile = $this->modx->user->getOne('Profile');
+        // Default to FontAwesome
+        $output = '<i class="icon icon-user icon-large"></i>&nbsp;';
+        $img = $this->modx->user->getPhoto(128, 128);
 
-        if ($userProfile->photo) {
-            // First, handle user defined image
-            $src = $this->modx->getOption('connectors_url', MODX_CONNECTORS_URL)
-                .'system/phpthumb.php?zc=1&h=32&w=32&src='
-                .$userProfile->photo;
-            $userImage = '<img src="' . $src . '" />';
-        } else {
-            // Fallback to Gravatar
-            $gravemail = md5(
-                strtolower(
-                    trim($userProfile->email)
-                )
-            );
-            $gravsrc = $this->modx->getOption('url_scheme', null, 'http://') . 'www.gravatar.com/avatar/'
-                .$gravemail . '?s=32';
-            $gravcheck = $this->modx->getOption('url_scheme', null, 'http://') . 'www.gravatar.com/avatar/'
-                .$gravemail . '?d=404';
-            $response = get_headers($gravcheck);
-
-            if ($response != false) {
-                $userImage = '<img src="' . $gravsrc . '" />';
-            } else {
-                $userImage = '<i class="icon-user icon-large"></i>';
-            }
+        if (!empty($img)) {
+            $output = '<img src="' . $img . '" />';
         }
 
-        return $userImage;
+        return $output;
     }
 
     /**
@@ -164,10 +158,10 @@ class TopMenu
                 $description = '';
             }
 
-            $menuTpl = '<li id="limenu-'.$menu['id'].'" class="top'.'">'."\n";
-            if (!empty($menu['handler'])) {
-                $menuTpl .= '<a href="javascript:;" onclick="'.str_replace('"','\'',$menu['handler']).'">'.$label.'</a>'."\n";
-            } elseif (!empty($menu['action'])) {
+            $top = (!empty($menu['children'])) ? ' class="top"' : '';
+            $menuTpl = '<li id="limenu-'.$menu['id'].'"'.$top.'>'."\n";
+
+            if (!empty($menu['action'])) {
                 if ($menu['namespace'] != 'core') {
                     // Handle the namespace
                     $menu['action'] .= '&namespace='.$menu['namespace'];
@@ -176,9 +170,12 @@ class TopMenu
                     // No icon, no title property
                     $title = '';
                 }
-                $menuTpl .= '<a href="?a='.$menu['action'].$menu['params'].'"'.$title.'>'.$label.$description.'</a>'."\n";
+                $onclick = (!empty($menu['handler'])) ? ' onclick="'.str_replace('"','\'',$menu['handler']).'"' : '';
+                $menuTpl .= '<a href="?a='.$menu['action'].$menu['params'].'"'.( $top ? ' class="top-link"': '' ).$onclick.$title.'>'.$label.$description.'</a>'."\n";
+            } elseif (!empty($menu['handler'])) {
+                $menuTpl .= '<a href="javascript:;" onclick="'.str_replace('"','\'',$menu['handler']).'">'.$label.'</a>'."\n";
             } else {
-                $menuTpl .= '<a>'.$menu['text'].'</a>'."\n";
+                $menuTpl .= '<a href="javascript:;">'.$label.'</a>'."\n";
             }
 
             if (!empty($menu['children'])) {
@@ -307,19 +304,17 @@ class TopMenu
                 $description = '<span class="description">'.$menu['description'].'</span>'."\n";
             }
 
-            if (!empty($menu['handler'])) {
-                $smTpl .= '<a href="javascript:;" onclick="'.str_replace('"','\'',$menu['handler']).'">'.$menu['text'].$description.'</a>'."\n";
-            } else {
-                $url = '';
-                if (!empty($menu['action'])) {
-                    if ($menu['namespace'] != 'core') {
-                        $menu['action'] .= '&namespace='.$menu['namespace'];
-                    }
-                    $url = ' href="?a='.$menu['action'].$menu['params'].'"';
+            $attributes = '';
+            if (!empty($menu['action'])) {
+                if ($menu['namespace'] != 'core') {
+                    $menu['action'] .= '&namespace='.$menu['namespace'];
                 }
-                //$url = (!empty($menu['action']) ? '?a='.$menu['action'].$menu['params'] : '#');
-                $smTpl .= '<a'.$url.'>'.$menu['text'].$description.'</a>'."\n";
+                $attributes = ' href="?a='.$menu['action'].$menu['params'].'"';
             }
+            if (!empty($menu['handler'])) {
+                $attributes .= ' onclick="'.str_replace('"','\'',$menu['handler']).'"';
+            }
+            $smTpl .= '<a'.$attributes.'>'.$menu['text'].$description.'</a>'."\n";
 
             if (!empty($menu['children'])) {
                 $smTpl .= '<ul class="modx-subsubnav">'."\n";
@@ -346,6 +341,9 @@ class TopMenu
         $this->output = str_replace($emptySub, '', $this->output);
     }
 }
+
+// Set Smarty placeholder to display search bar, if appropriate
+$this->setPlaceholder('_search', $modx->hasPermission('search'));
 
 $menu = new TopMenu($this);
 $menu->render();

@@ -2,7 +2,7 @@
 /*
  * MODX Revolution
  *
- * Copyright 2006-2014 by MODX, LLC.
+ * Copyright 2006-2015 by MODX, LLC.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -133,7 +133,7 @@ class modElement extends modAccessibleSimpleObject {
                 }
                 $property['desc_trans'] = $this->xpdo->lexicon($property['desc']);
                 $property['area'] = !empty($property['area']) ? $property['area'] : '';
-                $property['area_trans'] = $this->xpdo->lexicon($property['area']);
+                $property['area_trans'] = !empty($property['area']) ? $this->xpdo->lexicon($property['area']) : '';
 
                 if (!empty($property['options'])) {
                     foreach ($property['options'] as &$option) {

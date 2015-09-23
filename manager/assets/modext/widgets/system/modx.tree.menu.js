@@ -34,7 +34,9 @@ Ext.extend(MODx.tree.Menu, MODx.tree.Tree, {
     windows: {}
 
     ,createMenu: function(n,e) {
-        var r = {};
+        var r = {
+            parent: ''
+        };
         if (this.cm && this.cm.activeNode && this.cm.activeNode.attributes && this.cm.activeNode.attributes.data) {
             r['parent'] = this.cm.activeNode.attributes.data.text;
         }
@@ -47,6 +49,7 @@ Ext.extend(MODx.tree.Menu, MODx.tree.Tree, {
                 }
             });
         }
+        this.windows.create_menu.reset();
         this.windows.create_menu.setValues(r);
         this.windows.create_menu.show(e.target);
     }
@@ -57,15 +60,13 @@ Ext.extend(MODx.tree.Menu, MODx.tree.Tree, {
             action_id: r.action
             ,new_text: r.text
         });
-        if (!this.windows.update_menu) {
-            this.windows.update_menu = MODx.load({
-                xtype: 'modx-window-menu-update'
-                ,record: r
-                ,listeners: {
-                    'success': {fn:function(r) { this.refresh(); },scope:this}
-                }
-            });
-        }
+        this.windows.update_menu = MODx.load({
+            xtype: 'modx-window-menu-update'
+            ,record: r
+            ,listeners: {
+                'success': {fn:function(r) { this.refresh(); },scope:this}
+            }
+        });
         this.windows.update_menu.setValues(r);
         this.windows.update_menu.show(e.target);
     }
@@ -124,8 +125,8 @@ MODx.window.CreateMenu = function(config) {
     this.ident = config.ident || 'modx-cmenu-'+Ext.id();
     Ext.applyIf(config,{
         title: _('menu_create')
-        ,width: 650
-        ,height: 400
+        ,width: 600
+        // ,height: 400
         ,url: MODx.config.connector_url
         ,action: 'system/menu/create'
         ,fields: [{
@@ -137,6 +138,7 @@ MODx.window.CreateMenu = function(config) {
         },{
             layout: 'column'
             ,border: false
+            ,style: 'padding-top: 15px;'
             ,defaults: {
                 layout: 'form'
                 ,labelAlign: 'top'
@@ -146,6 +148,10 @@ MODx.window.CreateMenu = function(config) {
             ,items: [{
                 columnWidth: .5
                 ,items: [{
+                    xtype: 'hidden'
+                    ,name: 'previous_text'
+                    ,value: config.record && config.record.text ? config.record.text : ''
+                },{
                     fieldLabel: _('lexicon_key')
                     ,description: MODx.expandHelp ? '' : _('lexicon_key_desc')
                     ,name: 'text'
@@ -153,7 +159,7 @@ MODx.window.CreateMenu = function(config) {
                     ,allowBlank: false
                     ,anchor: '100%'
                     ,id: this.ident+'-text'
-                    ,readOnly: config.update ? true : false
+                    //,readOnly: config.update ? true : false
                 },{
                     xtype: MODx.expandHelp ? 'label' : 'hidden'
                     ,forId: this.ident+'-text'
@@ -297,11 +303,13 @@ MODx.combo.Menu = function(config) {
         ,baseParams: {
             action: 'system/menu/getlist'
             ,combo: true
+            ,limit: 0
+            ,showNone: true
         }
         ,fields: ['text','text_lex']
         ,displayField: 'text_lex'
         ,valueField: 'text'
-        ,listWidth: 300
+        // ,listWidth: 300
         ,editable: false
     });
     MODx.combo.Menu.superclass.constructor.call(this,config);

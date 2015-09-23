@@ -3,7 +3,7 @@
  * OpenExpedio ("xPDO") is an ultra-light, PHP 5.2+ compatible ORB (Object-
  * Relational Bridge) library based around PDO (http://php.net/pdo/).
  *
- * Copyright 2010-2014 by MODX, LLC.
+ * Copyright 2010-2015 by MODX, LLC.
  *
  * This file is part of xPDO.
  *
@@ -25,7 +25,7 @@
  * This is the main file to include in your scripts to use xPDO.
  *
  * @author Jason Coward <xpdo@opengeek.com>
- * @copyright Copyright (C) 2006-2013, Jason Coward
+ * @copyright Copyright (C) 2006-2014, Jason Coward
  * @license http://opensource.org/licenses/gpl-2.0.php GNU Public License v2
  * @package xpdo
  */
@@ -116,6 +116,7 @@ class xPDO {
     const OPT_CONNECTIONS = 'connections';
     const OPT_CONN_INIT = 'connection_init';
     const OPT_CONN_MUTABLE = 'connection_mutable';
+    const OPT_OVERRIDE_TABLE_TYPE = 'override_table';
     const OPT_HYDRATE_FIELDS = 'hydrate_fields';
     const OPT_HYDRATE_ADHOC_FIELDS = 'hydrate_adhoc_fields';
     const OPT_HYDRATE_RELATED_OBJECTS = 'hydrate_related_objects';
@@ -2545,17 +2546,6 @@ class xPDO {
         return $this->pdo->setAttribute($attribute, $value);
     }
 
-
-    /**
-     * Convert current microtime() result into seconds.
-     *
-     * @deprecated Use microtime(true) directly; this was to emulate PHP 5 behavior in PHP 4.
-     * @return float
-     */
-    public function getMicroTime() {
-       return microtime(true);
-    }
-
     /**
      * Creates an new xPDOQuery for a specified xPDOObject class.
      *
@@ -2683,7 +2673,9 @@ class xPDO {
                     $bound['/:' . $k . '\b/'] = str_replace(array('\\', '$'), array('\\\\', '\$'), $v);
                 }
             }
-            $this->log(xPDO::LOG_LEVEL_INFO, "{$sql}\n" . print_r($bound, true));
+            if ($this->getDebug() === true) {
+                $this->log(xPDO::LOG_LEVEL_DEBUG, "{$sql}\n" . print_r($bound, true));
+            }
             if (!empty($bound)) {
                 $sql= preg_replace(array_keys($bound), array_values($bound), $sql);
             }

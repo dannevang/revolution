@@ -33,12 +33,15 @@ MODx.grid.Grid = function(config) {
             ,scrollOffset: 0
             ,emptyText: config.emptyText || _('ext_emptymsg')
         }
+        ,groupingConfig: {
+            enableGroupingMenu: true
+        }
     });
     if (config.paging) {
-        var pgItms = config.showPerPage ? ['-',_('per_page')+':',{
+        var pgItms = config.showPerPage ? [_('per_page')+':',{
             xtype: 'textfield'
+            ,cls: 'x-tbar-page-size'
             ,value: config.pageSize || (parseInt(MODx.config.default_per_page) || 20)
-            ,width: 40
             ,listeners: {
                 'change': {fn:this.onChangePerPage,scope:this}
                 ,'render': {fn: function(cmp) {
@@ -65,14 +68,18 @@ MODx.grid.Grid = function(config) {
         });
     }
     if (config.grouping) {
-        Ext.applyIf(config,{
-          view: new Ext.grid.GroupingView({
+        var groupingConfig = {
             forceFit: true
             ,scrollOffset: 0
             ,groupTextTpl: '{text} ({[values.rs.length]} {[values.rs.length > 1 ? "'
-                +(config.pluralText || _('records')) + '" : "'
-                +(config.singleText || _('record'))+'"]})'
-          })
+                + (config.pluralText || _('records')) + '" : "'
+                + (config.singleText || _('record')) + '"]})'
+        };
+
+        Ext.applyIf(config.groupingConfig, groupingConfig);
+
+        Ext.applyIf(config,{
+            view: new Ext.grid.GroupingView(config.groupingConfig)
         });
     }
     if (config.tbar) {
@@ -87,6 +94,9 @@ MODx.grid.Grid = function(config) {
     MODx.grid.Grid.superclass.constructor.call(this,config);
     this._loadMenu(config);
     this.addEvents('beforeRemoveRow','afterRemoveRow','afterAutoSave');
+    if (this.autosave) {
+        this.on('afterAutoSave', this.onAfterAutoSave, this);
+    }
     if (!config.preventRender) { this.render(); }
 
     this.on('rowcontextmenu',this._showMenu,this);
@@ -134,18 +144,50 @@ Ext.extend(MODx.grid.Grid,Ext.grid.EditorGridPanel,{
                 ,data: d
             }
             ,listeners: {
-                'success': {fn:function(r) {
-                    if (this.config.save_callback) {
-                        Ext.callback(this.config.save_callback,this.config.scope || this,[r]);
+                success: {
+                    fn: function(r) {
+                        if (this.config.save_callback) {
+                            Ext.callback(this.config.save_callback,this.config.scope || this,[r]);
+                        }
+                        e.record.commit();
+                        if (!this.config.preventSaveRefresh) {
+                            this.refresh();
+                        }
+                        this.fireEvent('afterAutoSave',r);
                     }
-                    e.record.commit();
-                    if (!this.config.preventSaveRefresh) {
-                        this.refresh();
+                    ,scope: this
+                }
+                ,failure: {
+                    fn: function(r) {
+                        e.record.reject();
+                        this.fireEvent('afterAutoSave', r);
                     }
-                    this.fireEvent('afterAutoSave',r);
-                },scope:this}
+                    ,scope: this
+                }
             }
         });
+    }
+
+    /**
+     * Method executed after a record has been edited/saved inline from within the grid
+     *
+     * @param {Object} response - The processor save response object. See modConnectorResponse::outputContent (PHP)
+     */
+    ,onAfterAutoSave: function(response) {
+        if (!response.success && response.message === '') {
+            var msg = '';
+            if (response.data.length) {
+                // We get some data for specific field(s) error but not regular error message
+                Ext.each(response.data, function(data, index, list) {
+                    msg += (msg != '' ? '<br/>' : '') + data.msg;
+                }, this);
+            }
+            if (Ext.isEmpty(msg)) {
+                // Still no valid message so far, let's use some fallback
+                msg = this.autosaveErrorMsg || _('error');
+            }
+            MODx.msg.alert(_('error'), msg);
+        }
     }
 
     ,onChangePerPage: function(tf,nv) {
@@ -210,7 +252,7 @@ Ext.extend(MODx.grid.Grid,Ext.grid.EditorGridPanel,{
         if (this.fireEvent('beforeRemoveRow',r)) {
             MODx.msg.confirm({
                 title: _('warning')
-                ,text: _(text)
+                ,text: _(text, r)
                 ,url: this.config.url
                 ,params: p
                 ,listeners: {

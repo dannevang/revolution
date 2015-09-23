@@ -1,8 +1,8 @@
 <?php
 /**
- * System Info Russian lexicon topic
+ * System Info English lexicon topic
  *
- * @language ru
+ * @language en
  * @package modx
  * @subpackage lexicon
  */
@@ -18,12 +18,12 @@ $_lang['database_table_droptablestatements'] = 'Добавить команды 
 $_lang['database_table_effectivesize'] = 'Реальный размер';
 $_lang['database_table_indexsize'] = 'Размер индекса';
 $_lang['database_table_overhead'] = 'Перерасход';
-$_lang['database_table_reserved'] = 'Зарезервировано';
+$_lang['database_table_reserved'] = 'Зарезервировано';//sqlsrv
 $_lang['database_table_records'] = 'Записей';
 $_lang['database_table_tablename'] = 'Имя таблицы';
 $_lang['database_table_totalsize'] = 'Общий размер';
 $_lang['database_table_totals'] = 'Итого:';
-$_lang['database_table_unused'] = 'Не использовано';
+$_lang['database_table_unused'] = 'Не использовано';//sqlsrv
 $_lang['database_type'] = 'Тип базы данных';
 $_lang['database_version'] = 'Версия базы данных';
 $_lang['extjs_version'] = 'Версия <a href="http://extjs.com/" target="_blank">ExtJS</a>';
@@ -33,7 +33,7 @@ $_lang['modx_version'] = 'Версия MODX';
 $_lang['onlineusers_action'] = 'Действие';
 $_lang['onlineusers_actionid'] = 'ID действия';
 $_lang['onlineusers_ipaddress'] = 'IP-адрес пользователя';
-$_lang['onlineusers_lasthit'] = 'Последнее посещение';
+$_lang['onlineusers_lasthit'] = 'Последний визит';
 $_lang['onlineusers_message'] = 'Этот список показывает всех активных пользователей за последние 20 минут (текущее время: ';
 $_lang['onlineusers_title'] = 'Пользователи онлайн';
 $_lang['onlineusers_user'] = 'Пользователь';

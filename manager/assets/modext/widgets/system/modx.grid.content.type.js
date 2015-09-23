@@ -94,6 +94,7 @@ MODx.grid.ContentType = function(config) {
         },binaryColumn]
         ,tbar: [{
             text: _('content_type_new')
+            ,cls: 'primary-button'
             ,handler: this.newContentType
             ,scope: this
         }]
@@ -157,15 +158,16 @@ MODx.window.CreateContentType = function(config) {
     this.ident = config.ident || 'modx-cct'+Ext.id();
     Ext.applyIf(config,{
         title: _('content_type_new')
-        ,width: 550
+        ,width: 600
         ,url: MODx.config.connector_url
         ,action: 'system/contenttype/create'
-        ,cls: 'window-no-padding'
+        // ,cls: 'window-no-padding'
+        ,bwrapCssClass: 'x-window-with-tabs'
         ,fields: [{
             xtype: 'modx-tabs'
             ,items: [{
                 title: _('content_type_main_tab')
-                ,cls: 'main-wrapper'
+                // ,cls: 'main-wrapper'
                 ,layout: 'form'
                 ,items: [{
                     layout: 'column'
@@ -235,7 +237,8 @@ MODx.window.CreateContentType = function(config) {
                             ,name: 'binary'
                             ,hiddenName: 'binary'
                             ,id: this.ident+'-binary'
-                            ,width: 100
+                            // ,width: 100
+                            ,anchor: '100%'
                             ,inputValue: 0
                             ,value: 0
 
@@ -261,7 +264,7 @@ MODx.window.CreateContentType = function(config) {
                 title: _('content_type_header_tab')
                 ,layout: 'anchor'
                 ,anchor: '100%'
-                ,cls: 'main-wrapper'
+                // ,cls: 'main-wrapper'
                 ,items: [{
                     xtype: 'modx-content-type-headers-grid'
                     ,id: 'headers'
@@ -330,6 +333,7 @@ MODx.ContentTypeHeaderGrid = function(config) {
         ,autoHeight: true
         ,tbar: [{
             text: _('new')
+            ,cls: 'primary-button'
             ,handler: this.add
             ,scope: this
         }]

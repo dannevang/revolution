@@ -113,9 +113,10 @@ MODx.panel.TV = function(config) {
                         ,fieldLabel: _('static_file')
                         ,description: MODx.expandHelp ? '' : _('static_file_msg')
                         ,name: 'static_file'
-                        ,hideFiles: true
+                        // ,hideFiles: true
                         ,openTo: config.record.openTo || ''
                         ,id: 'modx-tv-static-file'
+                        ,triggerClass: 'x-form-code-trigger'
                         ,anchor: '100%'
                         ,maxLength: 255
                         ,value: config.record.static_file || ''
@@ -516,10 +517,6 @@ MODx.panel.TVInputProperties = function(config) {
                 ,html: _('tv_default_desc')
                 ,cls: 'desc-under'
             },{
-				html: '<hr />'
-				,anchor: '100%'
-				,border: false
-			},{
 				id: 'modx-input-props'
 				,autoHeight: true
 			}]

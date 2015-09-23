@@ -27,7 +27,6 @@ class ResourceUpdateManagerController extends ResourceManagerController {
      */
     public function loadCustomCssJs() {
         $managerUrl = $this->context->getOption('manager_url', MODX_MANAGER_URL, $this->modx->_userConfig);
-        $this->addJavascript($managerUrl.'assets/modext/util/datetime.js');
         $this->addJavascript($managerUrl.'assets/modext/widgets/element/modx.panel.tv.renders.js');
         $this->addJavascript($managerUrl.'assets/modext/widgets/resource/modx.grid.resource.security.local.js');
         $this->addJavascript($managerUrl.'assets/modext/widgets/resource/modx.panel.resource.tv.js');
@@ -120,7 +119,9 @@ class ResourceUpdateManagerController extends ResourceManagerController {
         $this->resourceArray['cacheable'] = intval($this->resourceArray['cacheable']) == 1 ? true : false;
         $this->resourceArray['deleted'] = intval($this->resourceArray['deleted']) == 1 ? true : false;
         $this->resourceArray['uri_override'] = intval($this->resourceArray['uri_override']) == 1 ? true : false;
-        $this->resourceArray['syncsite'] = !isset($this->resourceArray['syncsite']) || intval($this->resourceArray['syncsite']) == 1 ? true : false;
+        $this->resourceArray['syncsite'] = isset($this->resourceArray['syncsite'])
+            ? intval($this->resourceArray['syncsite']) == 1 ? true : false
+            : intval($this->context->getOption('syncsite_default', 1, $this->modx->_userConfig)) == 1 ? true : false;
         if (!empty($this->resourceArray['parent'])) {
             if ($this->parent->get('id') == $this->resourceArray['parent']) {
                 $this->resourceArray['parent_pagetitle'] = $this->parent->get('pagetitle');
@@ -137,7 +138,11 @@ class ResourceUpdateManagerController extends ResourceManagerController {
 
         if (!empty($reloadData)) {
             $this->resourceArray['resourceGroups'] = array();
-            $this->resourceArray['resource_groups'] = $this->modx->fromJSON($this->resourceArray['resource_groups']);
+            $this->resourceArray['resource_groups'] = $this->modx->getOption('resource_groups',
+                $this->resourceArray, array());
+            $this->resourceArray['resource_groups'] = is_array($this->resourceArray['resource_groups']) ?
+                $this->resourceArray['resource_groups'] :
+                $this->modx->fromJSON($this->resourceArray['resource_groups']);
             foreach ($this->resourceArray['resource_groups'] as $resourceGroup) {
                 $this->resourceArray['resourceGroups'][] = array(
                     $resourceGroup['id'],
@@ -168,6 +173,7 @@ class ResourceUpdateManagerController extends ResourceManagerController {
      */
     public function getPreviewUrl() {
         if (!$this->resource->get('deleted')) {
+            $this->modx->setOption('cache_alias_map', false);
             $sessionEnabled = '';
             $ctxSetting = $this->modx->getObject('modContextSetting', array('context_key' => $this->resource->get('context_key'), 'key' => 'session_enabled'));
 
